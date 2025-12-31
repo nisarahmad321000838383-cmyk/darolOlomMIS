@@ -462,6 +462,7 @@ def grade_entry(request):
 		created = 0
 		updated = 0
 		errors = 0
+		saved_subjects = []  # collect saved subjects info to show on page
 		# Pair up subject_ids and scores by index
 		for idx, sid in enumerate(subject_ids):
 			try:
@@ -483,17 +484,32 @@ def grade_entry(request):
 					errors += 1
 					continue
 
+			# Try to fetch subject name for display
+			try:
+				subj = Subject.objects.get(pk=sub_id)
+			except Subject.DoesNotExist:
+				errors += 1
+				continue
+
 			obj, created_flag = StudentScore.objects.update_or_create(
 				student=student, subject_id=sub_id,
 				defaults={'score': score_val}
 			)
 			if created_flag:
 				created += 1
+				op = 'created'
 			else:
 				updated += 1
+				op = 'updated'
 
+			saved_subjects.append({'id': sub_id, 'name': subj.name, 'score': score_val, 'op': op})
+
+		# Do not redirect: render the form again and show which subjects were saved
 		messages.success(request, f'عملیات ثبت نمرات انجام شد. ایجاد: {created} — بروزرسانی: {updated} — خطاها: {errors}')
-		return redirect(reverse('core:grade_entry'))
+		# Rebuild subjects list for template render (same as GET below)
+		subjects_qs = Subject.objects.order_by('name')
+		subjects = [{'id': sub.id, 'name': sub.name, 'semester': sub.semester} for sub in subjects_qs]
+		return render(request, 'core/grades_form.html', {'students': students, 'subjects': subjects, 'saved_subjects': saved_subjects, 'saved_student_id': student.id})
 
 	# GET
 	return render(request, 'core/grades_form.html', {'students': students, 'subjects': subjects})

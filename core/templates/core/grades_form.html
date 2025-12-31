@@ -50,6 +50,22 @@
       <button type="submit" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow">ثبت نمرات</button>
       <a href="{% url 'core:dashboard' %}" class="inline-flex items-center gap-2 border border-gray-300 px-4 py-2 rounded-md text-gray-700">انصراف</a>
     </div>
+    {% if saved_subjects %}
+    <div id="saved-summary" class="mt-4 p-3 border-l-4 border-green-500 bg-green-50 rounded">
+      {% for st in students %}
+        {% if st.id == saved_student_id %}
+          <div class="text-sm text-gray-700">
+            <strong>نمرات ثبت‌شده برای:</strong> {{ st.display }}
+          </div>
+        {% endif %}
+      {% endfor %}
+      <ul class="mt-2 list-disc list-inside text-sm text-gray-700">
+        {% for ss in saved_subjects %}
+          <li>{{ ss.name }} — {% if ss.score %}{{ ss.score }}{% else %}—{% endif %} <span class="text-xs text-gray-500">({{ ss.op }})</span></li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
   </form>
 </div>
 

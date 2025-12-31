@@ -1,0 +1,35 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+  <div class="bg-white p-6 rounded shadow max-w-lg">
+    <h2 class="text-xl font-semibold mb-4">فرم ثبت/ویرایش مضمون</h2>
+
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      <div>
+        {{ form.non_field_errors }}
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">{{ form.name.label }}</label>
+        {{ form.name }}
+        {% if form.name.errors %}
+          <p class="text-red-600 text-sm">{{ form.name.errors }}</p>
+        {% endif %}
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">{{ form.semester.label }}</label>
+        {{ form.semester }}
+        {% if form.semester.errors %}
+          <p class="text-red-600 text-sm">{{ form.semester.errors }}</p>
+        {% endif %}
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">ذخیره</button>
+        <a href="{% url 'core:subject_list' %}" class="text-gray-600">انصراف</a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

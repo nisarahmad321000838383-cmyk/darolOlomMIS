@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>دارالعلوم اسلامی الحاج سید منصور نادری - مدیریت</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100 text-gray-900 font-sans">
+    <div class="max-w-4xl mx-auto p-4">
+      {% include 'core/header.html' %}
+
+      {% if messages %}
+        <div>
+          {% for message in messages %}
+            <div class="mb-3 p-3 rounded {{ message.tags }} bg-green-100 text-green-800">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <main>
+        {% block content %}{% endblock %}
+      </main>
+
+      <footer class="mt-8 text-sm text-gray-600">
+        <p>سیستم اطلاعات مدیریت - دارالعلوم عالی اسلامی الحاج سید منصور نادری</p>
+      </footer>
+    </div>
+  </body>
+</html>

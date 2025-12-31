@@ -1,0 +1,66 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+  <div class="bg-white p-6 rounded shadow">
+    <h2 class="text-xl font-semibold mb-4">لیست اساتید</h2>
+
+    <form method="get" class="mb-4">
+      <input type="text" name="q" value="{{ q }}" placeholder="جستجو توسط نام، نام پدر یا نمبر تذکره" class="border rounded px-3 py-2 w-2/3">
+      <button type="submit" class="bg-blue-600 text-white px-3 py-2 rounded">جستجو</button>
+      <a href="{% url 'core:teacher_create' %}" class="mr-3 text-blue-600">+ ثبت استاد جدید</a>
+    </form>
+
+    <div class="divide-y">
+      {% for teacher in page_obj.object_list %}
+        <div class="py-4 flex items-center justify-between">
+          <div class="flex items-center space-x-4 rtl:space-x-reverse">
+            <div class="flex-shrink-0">
+              {% if teacher.image %}
+                <img src="{{ teacher.image.url }}" alt="{{ teacher.name }}" class="h-20 w-20 object-cover rounded-full ring-2 ring-indigo-300 shadow-sm">
+              {% else %}
+                <div class="h-20 w-20 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 ring-1 ring-gray-200 shadow-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 14c-4 0-6 2-6 4v1h12v-1c0-2-2-4-6-4z" />
+                  </svg>
+                </div>
+              {% endif %}
+            </div>
+
+            <div>
+              <div class="font-semibold text-lg text-gray-800">{{ teacher.name }}</div>
+              <div class="text-sm text-gray-600">نام پدر: <span class="text-gray-700">{{ teacher.father_name|default:'—' }}</span></div>
+              <div class="text-sm text-gray-600">نمبر تذکره: <span class="text-gray-700">{{ teacher.id_number|default:'—' }}</span></div>
+              <div class="text-sm text-gray-600">سمسترها: <span class="text-gray-700">{{ teacher.get_persian_semesters }}</span></div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <a href="{% url 'core:teacher_edit' teacher.pk %}" class="inline-flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-white px-3 py-1 rounded-md text-sm">ویرایش</a>
+
+            <form method="post" action="{% url 'core:teacher_delete' teacher.pk %}" class="inline-block" onsubmit="return confirm('آیا مطمئن هستید که می‌خواهید این استاد را حذف کنید؟');">
+              {% csrf_token %}
+              <button type="submit" class="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm">حذف</button>
+            </form>
+          </div>
+        </div>
+      {% empty %}
+        <p>هیچ استادی یافت نشد.</p>
+      {% endfor %}
+    </div>
+
+    <div class="mt-4">
+      <nav class="flex items-center space-x-2">
+        {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}" class="px-3 py-1 bg-gray-200 rounded">قبلی</a>
+        {% endif %}
+
+        <span class="px-3 py-1">صفحه {{ page_obj.number }} از {{ page_obj.paginator.num_pages }}</span>
+
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}&q={{ q }}" class="px-3 py-1 bg-gray-200 rounded">بعدی</a>
+        {% endif %}
+      </nav>
+    </div>
+  </div>
+{% endblock %}

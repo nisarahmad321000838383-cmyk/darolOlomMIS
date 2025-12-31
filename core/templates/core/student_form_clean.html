@@ -1,0 +1,213 @@
+{% extends 'core/base.html' %}
+{% load static form_tags %}
+
+{% block content %}
+  <div class="bg-white p-6 rounded-xl shadow-md ring-1 ring-gray-200">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-2xl font-bold">ثبت دانش‌آموز جدید</h2>
+        <p class="text-sm text-gray-500">فرم ثبت اطلاعات پایه دانش‌آموزان مرکز</p>
+      </div>
+      <div class="hidden sm:flex items-center gap-3">
+        <a href="{% url 'core:student_list' %}" class="text-sm text-blue-600 hover:underline">بازگشت به لیست</a>
+      </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+      {% csrf_token %}
+
+      <!-- Left: image upload -->
+      <div class="md:col-span-1 flex flex-col items-center">
+        <label class="block text-sm font-medium text-gray-700 mb-3">عکس دانش‌آموز</label>
+
+        <div class="w-44 h-44 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden border border-dashed border-gray-200">
+          <img id="preview" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><rect fill='%23f3f4f6' width='200' height='200'/><g transform='translate(50,30)'><circle cx='50' cy='40' r='30' fill='%23e5e7eb'/><rect x='20' y='90' width='60' height='20' rx='10' fill='%23e5e7eb'/></g></svg>" alt="پیش‌نمایش" class="w-full h-full object-cover" />
+        </div>
+
+        <label for="id_image" class="mt-3 w-full inline-flex justify-center items-center px-3 py-2 bg-white border rounded-md text-sm text-gray-700 hover:bg-gray-50 cursor-pointer">
+          انتخاب فایل
+        </label>
+        {{ form.image }}
+
+        <p class="text-xs text-gray-400 mt-2">فرمت‌های مجاز: JPG, PNG — حداکثر 2MB</p>
+      </div>
+
+      <!-- Right: inputs -->
+      <div class="md:col-span-2 space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">نام و نام خانوادگی</label>
+            {{ form.name|add_class:'mt-1 block w-full rounded-md border-gray-300 border border-2 shadow-sm focus:border-blue-500 focus:ring-blue-500' }}
+            {% if form.name.errors %}
+              <p class="text-xs text-red-600 mt-1">{{ form.name.errors|striptags }}</p>
+            {% endif %}
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700">نام پدر</label>
+            {{ form.father_name|add_class:'mt-1 block w-full rounded-md border-gray-300 border border-2 shadow-sm focus:border-blue-500 focus:ring-blue-500' }}
+            {% if form.father_name.errors %}
+              <p class="text-xs text-red-600 mt-1">{{ form.father_name.errors|striptags }}</p>
+            {% endif %}
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700">نام پدر کلان</label>
+            {{ form.grandfather_name|add_class:'mt-1 block w-full rounded-md border-gray-300 border border-2 shadow-sm focus:border-blue-500 focus:ring-blue-500' }}
+            {% if form.grandfather_name.errors %}
+              <p class="text-xs text-red-600 mt-1">{{ form.grandfather_name.errors|striptags }}</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">سکونت فعلی</label>
+            {{ form.current_address|add_class:'mt-1 block w-full rounded-md border-gray-300 border border-2 shadow-sm focus:border-blue-500 focus:ring-blue-500' }}
+            {% if form.current_address.errors %}
+              <p class="text-xs text-red-600 mt-1">{{ form.current_address.errors|striptags }}</p>
+            {% endif %}
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700">سکونت اصلی</label>
+            {{ form.permanent_address|add_class:'mt-1 block w-full rounded-md border-gray-300 border border-2 shadow-sm focus:border-blue-500 focus:ring-blue-500' }}
+            {% if form.permanent_address.errors %}
+              <p class="text-xs text-red-600 mt-1">{{ form.permanent_address.errors|striptags }}</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700">تایم</label>
+          <div class="mt-1 grid grid-cols-2 gap-2 items-center">
+            <div>
+              <label class="block text-xs text-gray-600">تایم آغاز</label>
+              {{ form.time_start|add_class:'mt-1 block w-full rounded-md border-gray-300' }}
+            </div>
+            <div>
+              <label class="block text-xs text-gray-600">تایم ختم</label>
+              {{ form.time_end|add_class:'mt-1 block w-full rounded-md border-gray-300' }}
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">نمبر تذکره</label>
+              {{ form.id_number|add_class:'mt-1 block w-full rounded-md border-gray-300' }}
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">جنسیت</label>
+              {{ form.gender|add_class:'mt-1 block w-full rounded-md border-gray-300' }}
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">نمبر امتحان کانکور</label>
+              {{ form.exam_number|add_class:'mt-1 block w-full rounded-md border-gray-300' }}
+            </div>
+          </div>
+
+          <label class="block text-sm font-medium text-gray-700 mt-4">صنف</label>
+          {{ form.class_name|add_class:'mt-1 block w-full rounded-md border-gray-300 border border-2 shadow-sm focus:border-blue-500 focus:ring-blue-500' }}
+          {% if form.class_name.errors %}
+            <p class="text-xs text-red-600 mt-1">{{ form.class_name.errors|striptags }}</p>
+          {% endif %}
+
+          <label class="block text-sm font-medium text-gray-700 mt-4">شماره موبایل</label>
+          {{ form.mobile_number|add_class:'mt-1 block w-1/2 rounded-md border-gray-300 border border-2 shadow-sm focus:border-blue-500 focus:ring-blue-500' }}
+          {% if form.mobile_number.errors %}
+            <p class="text-xs text-red-600 mt-1">{{ form.mobile_number.errors|striptags }}</p>
+          {% endif %}
+        </div>
+
+        <div class="pt-2 flex items-center gap-3">
+          <button type="submit" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow">ثبت دانش‌آموز</button>
+          <a href="{% url 'core:student_list' %}" class="inline-flex items-center gap-2 border border-gray-300 px-4 py-2 rounded-md text-gray-700">انصراف</a>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  {# Embed class names as JSON for client-side search. Use safe json_script filter if available. #}
+  {% if class_names %}
+    {{ class_names|json_script:"classNames" }}
+  {% else %}
+    <script id="classNames" type="application/json">[]</script>
+  {% endif %}
+
+{% block extra_js %}
+<script>
+  (function(){
+    const fileInput = document.querySelector('#id_image');
+    const preview = document.getElementById('preview');
+    if (!fileInput) return;
+
+    // hide default file input (it's already rendered by Django field)
+    fileInput.classList.add('hidden');
+
+    fileInput.addEventListener('change', function(e){
+      const file = this.files && this.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(ev){ preview.src = ev.target.result; };
+      reader.readAsDataURL(file);
+    });
+  })();
+</script>
+<script>
+  (function(){
+    // Searchable class selector for the field with name "class_name".
+    const raw = document.getElementById('classNames') && document.getElementById('classNames').textContent;
+    let classNames = [];
+    try { classNames = raw ? JSON.parse(raw) : []; } catch(e){ classNames = []; }
+
+    const input = document.querySelector('#id_class_name');
+    if (!input) return;
+
+    // Create suggestion box
+    const container = document.createElement('div');
+    container.className = 'relative w-full';
+
+    const suggestions = document.createElement('ul');
+    suggestions.className = 'absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow max-h-60 overflow-auto hidden';
+    suggestions.style.listStyle = 'none';
+    suggestions.style.padding = '0';
+    suggestions.style.margin = '0';
+
+    // Insert container after input
+    input.parentNode.insertBefore(container, input);
+    container.appendChild(input);
+    container.appendChild(suggestions);
+
+    function renderList(items){
+      suggestions.innerHTML = '';
+      if (!items.length){ suggestions.classList.add('hidden'); return; }
+      items.forEach(name => {
+        const li = document.createElement('li');
+        li.className = 'px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm';
+        li.textContent = name;
+        li.addEventListener('click', function(){
+          input.value = name;
+          suggestions.classList.add('hidden');
+        });
+        suggestions.appendChild(li);
+      });
+      suggestions.classList.remove('hidden');
+    }
+
+    input.addEventListener('input', function(){
+      const q = this.value.trim().toLowerCase();
+      if (!q){ suggestions.classList.add('hidden'); return; }
+      const matches = classNames.filter(n => n.toLowerCase().includes(q));
+      // Only show names that match the searched text
+      renderList(matches.slice(0, 20));
+    });
+
+    // hide suggestions on outside click
+    document.addEventListener('click', function(e){
+      if (!container.contains(e.target)) suggestions.classList.add('hidden');
+    });
+  })();
+</script>
+{% endblock %}
+
+{% endblock %}

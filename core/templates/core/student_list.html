@@ -292,7 +292,8 @@
   ]
 </script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
     let studentsData = [];
@@ -422,17 +423,47 @@
       }, 800);
     }
 
-    function printToPDF() {
+    async function printToPDF() {
       const element = document.getElementById('idCardContent');
-      const opt = {
-        margin: 0,
-        filename: 'student-id-card.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 3, useCORS: true, backgroundColor: null },
-        jsPDF: { unit: 'px', format: [540, 340], orientation: 'landscape' }
-      };
-
-      html2pdf().set(opt).from(element).save();
+      
+      try {
+        // Use html2canvas directly first
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: null,
+          logging: true,
+          width: 540,
+          height: 340
+        });
+        
+        // Check if canvas has content
+        console.log('Canvas created:', canvas.width, 'x', canvas.height);
+        
+        // Create PDF from canvas
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        
+        // Import jsPDF from window
+        const { jsPDF } = window.jspdf || window;
+        
+        if (!jsPDF) {
+          throw new Error('jsPDF not loaded');
+        }
+        
+        const pdf = new jsPDF({
+          orientation: 'landscape',
+          unit: 'px',
+          format: [540, 340]
+        });
+        
+        pdf.addImage(imgData, 'JPEG', 0, 0, 540, 340);
+        pdf.save('student-id-card.pdf');
+        
+      } catch (error) {
+        console.error('PDF Error:', error);
+        alert('خطا در ایجاد PDF. لطفاً از گزینه چاپ مستقیم استفاده کنید.');
+      }
     }
 
     // Close modal on outside click

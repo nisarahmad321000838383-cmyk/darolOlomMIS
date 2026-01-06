@@ -17,7 +17,7 @@ class StudentForm(forms.ModelForm):
             'time_start',
             'time_end',
             'exam_number',
-            'class_name',
+            'school_class',
             'mobile_number',
             'image',
         ]
@@ -30,7 +30,7 @@ class StudentForm(forms.ModelForm):
             'exam_number': 'نمبر امتحان کانکور',
             'current_address': 'نشانی فعلی',
             'permanent_address': 'نشانی دایمی',
-            'class_name': 'صنف',
+            'school_class': 'صنف',
             'mobile_number': 'شماره موبایل',
             'image': 'عکس',
         }
@@ -42,6 +42,7 @@ class StudentForm(forms.ModelForm):
             'time_end': forms.TimeInput(attrs={'type': 'time', 'class': 'border border-gray-300 rounded px-2 py-1'}),
             'id_number': forms.TextInput(attrs={'class': 'border border-gray-300 rounded px-2 py-1 w-full'}),
             'exam_number': forms.TextInput(attrs={'class': 'border border-gray-300 rounded px-2 py-1 w-full'}),
+            'school_class': forms.Select(attrs={'class': 'border border-gray-300 rounded px-2 py-1'}),
         }
 
 

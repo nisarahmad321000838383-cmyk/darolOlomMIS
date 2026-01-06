@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.contrib import messages
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, JsonResponse
 from django.conf import settings
 import os
 from .models import Student, SchoolClass, Subject, Teacher
@@ -22,9 +22,7 @@ def student_create(request):
 			return redirect(reverse('core:student_list'))
 	else:
 		form = StudentForm()
-	# Pass available class names so the template can provide a searchable selector
-	class_names = list(SchoolClass.objects.values_list('name', flat=True))
-	return render(request, 'core/student_form_clean.html', {'form': form, 'class_names': class_names})
+	return render(request, 'core/student_form_clean.html', {'form': form})
 
 
 def student_list(request):
@@ -362,8 +360,7 @@ def student_edit(request, pk):
 			return redirect(reverse('core:student_list'))
 	else:
 		form = StudentForm(instance=student)
-	class_names = list(SchoolClass.objects.values_list('name', flat=True))
-	return render(request, 'core/student_form_clean.html', {'form': form, 'class_names': class_names})
+	return render(request, 'core/student_form_clean.html', {'form': form})
 
 
 def student_delete(request, pk):
@@ -387,14 +384,14 @@ def dashboard(request):
 	# Prepare data for pie chart: count of students per SchoolClass name.
 	classes = list(SchoolClass.objects.order_by('name'))
 	labels = [c.name for c in classes]
-	counts = [Student.objects.filter(class_name=c.name).count() for c in classes]
+	counts = [Student.objects.filter(school_class=c).count() for c in classes]
 
-	# If there are no defined classes but some students have class_name values,
-	# fall back to grouping by student.class_name values.
+	# If there are no defined classes but some students have school_class values,
+	# fall back to grouping by student.school_class values.
 	if not classes:
 		from django.db.models import Count
-		qs = Student.objects.values('class_name').annotate(cnt=Count('id')).order_by('-cnt')
-		labels = [x['class_name'] or 'نامشخص' for x in qs]
+		qs = Student.objects.values('school_class__name').annotate(cnt=Count('id')).order_by('-cnt')
+		labels = [x['school_class__name'] or 'نامشخص' for x in qs]
 		counts = [x['cnt'] for x in qs]
 
 	chart_json = mark_safe(json.dumps({'labels': labels, 'data': counts}))
@@ -421,13 +418,11 @@ def grade_entry(request):
 	students = []
 	for s in students_qs:
 		sems = list(s.semesters.values_list('number', flat=True)) if hasattr(s, 'semesters') else []
-		# fallback: determine semester from student's class_name -> SchoolClass.semester
+		# fallback: determine semester from student's school_class -> SchoolClass.semester
 		if not sems:
 			try:
-				if s.class_name:
-					klass = SchoolClass.objects.filter(name=s.class_name).first()
-					if klass and klass.semester:
-						sems = [klass.semester.number]
+				if s.school_class and s.school_class.semester:
+					sems = [s.school_class.semester.number]
 			except Exception:
 				# any unexpected issue -> keep sems empty
 				sems = []
@@ -435,7 +430,7 @@ def grade_entry(request):
 			'id': s.id,
 			'display': f"{s.name} ({s.father_name})",
 			'semesters': sems,
-			'class_name': s.class_name or ''
+			'class_name': s.school_class.name if s.school_class else ''
 		})
 
 	subjects_qs = Subject.objects.order_by('name')
@@ -510,3 +505,45 @@ def grade_entry(request):
 
 	# GET
 	return render(request, 'core/grades_form.html', {'students': students, 'subjects': subjects})
+
+
+def api_class_search(request):
+	"""AJAX endpoint for searching SchoolClass by name.
+	
+	Only returns classes that match the search query.
+	If no query provided, returns empty list.
+	"""
+	query = request.GET.get('q', '').strip()
+	page = int(request.GET.get('page', 1))
+	page_size = 20
+	
+	# IMPORTANT: Only search if query is provided
+	# This ensures we NEVER load all classes
+	if not query:
+		# Return empty results if no search term
+		return JsonResponse({
+			'results': [],
+			'pagination': {'more': False}
+		})
+	
+	# Filter classes by name (case-insensitive) - ONLY matching classes
+	classes = SchoolClass.objects.filter(name__icontains=query).order_by('name')
+	
+	# Paginate the filtered results
+	start = (page - 1) * page_size
+	end = start + page_size
+	total_count = classes.count()
+	classes_page = classes[start:end]
+	
+	# Format for Select2
+	results = [
+		{'id': c.id, 'text': c.name}
+		for c in classes_page
+	]
+	
+	return JsonResponse({
+		'results': results,
+		'pagination': {
+			'more': end < total_count
+		}
+	})

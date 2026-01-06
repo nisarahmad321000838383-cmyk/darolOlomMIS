@@ -14,6 +14,7 @@ urlpatterns = [
     path('classes/<int:pk>/edit/', views.class_edit, name='class_edit'),
     path('classes/<int:pk>/delete/', views.class_delete, name='class_delete'),
     path('classes/', views.classes_list, name='classes_list'),
+    path('api/classes/search/', views.api_class_search, name='api_class_search'),
     path('teachers/', views.teacher_list, name='teacher_list'),
     path('teachers/new/', views.teacher_create, name='teacher_create'),
     path('teachers/<int:pk>/edit/', views.teacher_edit, name='teacher_edit'),

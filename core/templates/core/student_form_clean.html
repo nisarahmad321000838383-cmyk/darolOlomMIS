@@ -1,6 +1,73 @@
 {% extends 'core/base.html' %}
 {% load static form_tags %}
 
+{% block extra_head %}
+<style>
+  /* Modern Autocomplete Combobox Styles */
+  #class_autocomplete {
+    transition: all 0.2s ease;
+  }
+  
+  #class_autocomplete:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  
+  #class_suggestions {
+    animation: slideDown 0.2s ease;
+  }
+  
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .suggestion-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    direction: rtl;
+    text-align: right;
+    border-bottom: 1px solid #f3f4f6;
+  }
+  
+  .suggestion-item:last-child {
+    border-bottom: none;
+  }
+  
+  .suggestion-item:hover,
+  .suggestion-item.selected {
+    background-color: #eff6ff;
+  }
+  
+  .suggestion-item.selected {
+    background-color: #dbeafe;
+    font-weight: 500;
+  }
+  
+  .no-results {
+    padding: 16px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 14px;
+  }
+  
+  .loading {
+    padding: 16px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 14px;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
   <div class="bg-white p-6 rounded-xl shadow-md ring-1 ring-gray-200">
     <div class="flex items-center justify-between mb-6">
@@ -108,16 +175,27 @@
 
           <div>
             <label class="block text-sm font-medium text-gray-700 mt-4">صنف</label>
-            <div id="classComboBoxContainer" class="relative mt-1">
-              {{ form.class_name|add_class:'block w-full rounded-md border-gray-300 border border-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 pr-10' }}
-              <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
+            <div class="relative mt-1">
+              <!-- Hidden field for ForeignKey ID -->
+              <input type="hidden" id="id_school_class" name="school_class" value="{% if form.instance.school_class %}{{ form.instance.school_class.id }}{% endif %}">
+              
+              <!-- Visible autocomplete input -->
+              <input 
+                type="text" 
+                id="class_autocomplete" 
+                autocomplete="off"
+                placeholder="صنف را تایپ کنید..."
+                value="{% if form.instance.school_class %}{{ form.instance.school_class.name }}{% endif %}"
+                class="block w-full rounded-md border-gray-300 border-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:ring-2 px-4 py-2.5 text-base"
+                style="direction: rtl;">
+              
+              <!-- Suggestions dropdown -->
+              <div id="class_suggestions" class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg hidden max-h-60 overflow-auto">
+                <!-- Suggestions will be populated here -->
               </div>
             </div>
-            {% if form.class_name.errors %}
-              <p class="text-xs text-red-600 mt-1">{{ form.class_name.errors|striptags }}</p>
+            {% if form.school_class.errors %}
+              <p class="text-xs text-red-600 mt-1">{{ form.school_class.errors|striptags }}</p>
             {% endif %}
           </div>
 
@@ -136,12 +214,6 @@
     </form>
   </div>
 
-  {# Embed class names as JSON for client-side search. Use safe json_script filter if available. #}
-  {% if class_names %}
-    {{ class_names|json_script:"classNames" }}
-  {% else %}
-    <script id="classNames" type="application/json">[]</script>
-  {% endif %}
 
 {% block extra_js %}
 <script>
@@ -162,156 +234,171 @@
     });
   })();
 </script>
+
 <script>
-  (function(){
-    // Optimized searchable class combobox with keyboard navigation
-    const raw = document.getElementById('classNames') && document.getElementById('classNames').textContent;
-    let classNames = [];
-    try { classNames = raw ? JSON.parse(raw) : []; } catch(e){ classNames = []; }
-
-    const input = document.querySelector('#id_class_name');
-    if (!input) return;
-
-    const container = document.getElementById('classComboBoxContainer');
-    if (!container) return;
-
-    // Add autocomplete attribute
-    input.setAttribute('autocomplete', 'off');
-    input.setAttribute('placeholder', 'صنف را جستجو کنید یا وارد نمایید...');
-
-    // Create dropdown
-    const dropdown = document.createElement('div');
-    dropdown.className = 'absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto hidden';
-    dropdown.style.top = '100%';
-    container.appendChild(dropdown);
-
-    let selectedIndex = -1;
-    let currentMatches = [];
-
-    function highlightMatch(text, query) {
-      if (!query) return text;
-      const regex = new RegExp(`(${query})`, 'gi');
-      return text.replace(regex, '<mark class="bg-yellow-200 font-semibold">$1</mark>');
+(function() {
+  // Professional Autocomplete Combobox - Like Google, Amazon, etc.
+  const input = document.getElementById('class_autocomplete');
+  const hiddenInput = document.getElementById('id_school_class');
+  const suggestionsContainer = document.getElementById('class_suggestions');
+  
+  let currentFocus = -1;
+  let searchTimeout = null;
+  let currentSuggestions = [];
+  
+  // Fetch suggestions from server
+  async function fetchSuggestions(query) {
+    if (!query || query.trim().length === 0) {
+      hideSuggestions();
+      return;
     }
-
-    function renderDropdown(items, query) {
-      dropdown.innerHTML = '';
-      currentMatches = items;
-      selectedIndex = -1;
-
-      if (!items.length) {
-        const emptyMsg = document.createElement('div');
-        emptyMsg.className = 'px-4 py-3 text-sm text-gray-500 text-center';
-        emptyMsg.textContent = 'هیچ صنفی یافت نشد';
-        dropdown.appendChild(emptyMsg);
-        dropdown.classList.remove('hidden');
-        return;
-      }
-
-      items.forEach((name, index) => {
-        const item = document.createElement('div');
-        item.className = 'px-4 py-2.5 cursor-pointer hover:bg-blue-50 text-sm transition-colors flex items-center justify-between';
-        item.setAttribute('data-index', index);
-        
-        const textSpan = document.createElement('span');
-        textSpan.innerHTML = highlightMatch(name, query);
-        item.appendChild(textSpan);
-
-        // Add check icon for current value
-        if (input.value === name) {
-          const checkIcon = document.createElement('svg');
-          checkIcon.className = 'w-5 h-5 text-blue-600';
-          checkIcon.setAttribute('fill', 'currentColor');
-          checkIcon.setAttribute('viewBox', '0 0 20 20');
-          checkIcon.innerHTML = '<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>';
-          item.appendChild(checkIcon);
-          item.classList.add('bg-blue-50', 'font-medium');
-        }
-
-        item.addEventListener('click', function() {
-          input.value = name;
-          dropdown.classList.add('hidden');
-          input.focus();
-        });
-
-        dropdown.appendChild(item);
+    
+    try {
+      showLoading();
+      
+      const response = await fetch(`{% url 'core:api_class_search' %}?q=${encodeURIComponent(query)}`);
+      const data = await response.json();
+      
+      currentSuggestions = data.results;
+      displaySuggestions(data.results);
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
+      showError();
+    }
+  }
+  
+  // Display suggestions in dropdown
+  function displaySuggestions(suggestions) {
+    suggestionsContainer.innerHTML = '';
+    
+    if (suggestions.length === 0) {
+      suggestionsContainer.innerHTML = '<div class="no-results">هیچ صنفی یافت نشد</div>';
+      suggestionsContainer.classList.remove('hidden');
+      return;
+    }
+    
+    suggestions.forEach((item, index) => {
+      const div = document.createElement('div');
+      div.className = 'suggestion-item';
+      div.textContent = item.text;
+      div.dataset.id = item.id;
+      div.dataset.text = item.text;
+      div.dataset.index = index;
+      
+      // Mouse click
+      div.addEventListener('click', () => selectSuggestion(item.id, item.text));
+      
+      // Mouse hover
+      div.addEventListener('mouseenter', () => {
+        removeActiveClass();
+        div.classList.add('selected');
+        currentFocus = index;
       });
-
-      dropdown.classList.remove('hidden');
+      
+      suggestionsContainer.appendChild(div);
+    });
+    
+    suggestionsContainer.classList.remove('hidden');
+  }
+  
+  // Show loading state
+  function showLoading() {
+    suggestionsContainer.innerHTML = '<div class="loading">در حال جستجو...</div>';
+    suggestionsContainer.classList.remove('hidden');
+  }
+  
+  // Show error state
+  function showError() {
+    suggestionsContainer.innerHTML = '<div class="no-results">خطا در بارگذاری</div>';
+    suggestionsContainer.classList.remove('hidden');
+  }
+  
+  // Hide suggestions
+  function hideSuggestions() {
+    suggestionsContainer.classList.add('hidden');
+    currentFocus = -1;
+  }
+  
+  // Select a suggestion
+  function selectSuggestion(id, text) {
+    input.value = text;
+    hiddenInput.value = id;
+    hideSuggestions();
+    input.blur();
+  }
+  
+  // Remove active class from all items
+  function removeActiveClass() {
+    const items = suggestionsContainer.querySelectorAll('.suggestion-item');
+    items.forEach(item => item.classList.remove('selected'));
+  }
+  
+  // Input event - trigger search
+  input.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    
+    const query = this.value.trim();
+    
+    // Clear hidden input if user clears the text
+    if (query === '') {
+      hiddenInput.value = '';
+      hideSuggestions();
+      return;
     }
-
-    function selectItem(index) {
-      const items = dropdown.querySelectorAll('[data-index]');
-      items.forEach(item => item.classList.remove('bg-blue-100'));
-      
-      if (index >= 0 && index < items.length) {
-        items[index].classList.add('bg-blue-100');
-        items[index].scrollIntoView({ block: 'nearest' });
-        selectedIndex = index;
+    
+    // Debounce: wait 300ms after user stops typing
+    searchTimeout = setTimeout(() => {
+      fetchSuggestions(query);
+    }, 300);
+  });
+  
+  // Keyboard navigation
+  input.addEventListener('keydown', function(e) {
+    const items = suggestionsContainer.querySelectorAll('.suggestion-item');
+    
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      currentFocus++;
+      if (currentFocus >= items.length) currentFocus = 0;
+      addActiveClass(items);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      currentFocus--;
+      if (currentFocus < 0) currentFocus = items.length - 1;
+      addActiveClass(items);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (currentFocus > -1 && items[currentFocus]) {
+        items[currentFocus].click();
       }
+    } else if (e.key === 'Escape') {
+      hideSuggestions();
     }
-
-    // Show all classes on focus
-    input.addEventListener('focus', function() {
-      const q = this.value.trim().toLowerCase();
-      const matches = q ? classNames.filter(n => n.toLowerCase().includes(q)) : classNames;
-      renderDropdown(matches.slice(0, 50), q);
-    });
-
-    // Filter on input
-    input.addEventListener('input', function() {
-      const q = this.value.trim().toLowerCase();
-      if (!q) {
-        renderDropdown(classNames.slice(0, 50), '');
-        return;
-      }
-      
-      const matches = classNames.filter(n => n.toLowerCase().includes(q));
-      renderDropdown(matches.slice(0, 50), q);
-    });
-
-    // Keyboard navigation
-    input.addEventListener('keydown', function(e) {
-      const items = dropdown.querySelectorAll('[data-index]');
-      
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        if (dropdown.classList.contains('hidden')) {
-          input.focus();
-        } else {
-          selectItem(Math.min(selectedIndex + 1, items.length - 1));
-        }
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        selectItem(Math.max(selectedIndex - 1, 0));
-      } else if (e.key === 'Enter') {
-        if (selectedIndex >= 0 && selectedIndex < currentMatches.length) {
-          e.preventDefault();
-          input.value = currentMatches[selectedIndex];
-          dropdown.classList.add('hidden');
-        }
-      } else if (e.key === 'Escape') {
-        dropdown.classList.add('hidden');
-      }
-    });
-
-    // Hide dropdown on outside click
-    document.addEventListener('click', function(e) {
-      if (!container.contains(e.target)) {
-        dropdown.classList.add('hidden');
-      }
-    });
-
-    // Show dropdown on click
-    input.addEventListener('click', function(e) {
-      e.stopPropagation();
-      if (dropdown.classList.contains('hidden')) {
-        const q = this.value.trim().toLowerCase();
-        const matches = q ? classNames.filter(n => n.toLowerCase().includes(q)) : classNames;
-        renderDropdown(matches.slice(0, 50), q);
-      }
-    });
-  })();
+  });
+  
+  // Add active class to current item
+  function addActiveClass(items) {
+    removeActiveClass();
+    if (currentFocus >= items.length) currentFocus = 0;
+    if (currentFocus < 0) currentFocus = items.length - 1;
+    items[currentFocus].classList.add('selected');
+    items[currentFocus].scrollIntoView({ block: 'nearest' });
+  }
+  
+  // Close suggestions when clicking outside
+  document.addEventListener('click', function(e) {
+    if (e.target !== input && e.target !== suggestionsContainer) {
+      hideSuggestions();
+    }
+  });
+  
+  // Focus event - show suggestions if there's text
+  input.addEventListener('focus', function() {
+    if (this.value.trim().length > 0) {
+      fetchSuggestions(this.value.trim());
+    }
+  });
+})();
 </script>
 {% endblock %}
 

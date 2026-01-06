@@ -104,10 +104,10 @@
                     <span class="font-medium">موبایل:</span>
                     <span>{{ student.mobile_number|default:'—' }}</span>
                   </div>
-                  {% if student.class_name %}
+                  {% if student.school_class %}
                   <div class="flex items-center gap-1.5">
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium bg-primary-100 text-primary-800">
-                      {{ student.class_name }}
+                      {{ student.school_class.name }}
                     </span>
                   </div>
                   {% endif %}
@@ -308,7 +308,7 @@
         "id": {{ student.pk }},
         "name": "{{ student.name|escapejs }}",
         "father_name": "{{ student.father_name|default:'-'|escapejs }}",
-        "class_name": "{{ student.class_name|default:'-'|escapejs }}",
+        "class_name": "{% if student.school_class %}{{ student.school_class.name|escapejs }}{% else %}-{% endif %}",
         "image_url": "{% if student.image %}{{ student.image.url }}{% endif %}",
         "id_number": "{{ student.id_number|default:'-'|escapejs }}",
         "mobile_number": "{{ student.mobile_number|default:'-'|escapejs }}"

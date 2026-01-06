@@ -26,10 +26,9 @@ class Student(models.Model):
 	time_end = models.TimeField('تایم ختم', blank=True, null=True)
 
 	permanent_address = models.TextField('نشانی دایمی', blank=True)
-	# Keep as a simple text field for now. Allow blank and provide a default
-	# so adding new models (like SchoolClass) doesn't force an interactive
-	# migration prompt for existing rows.
-	class_name = models.CharField(max_length=100, blank=True, default='')
+	# Changed to ForeignKey to maintain referential integrity
+	# When a class name is changed, all students automatically reflect the change
+	school_class = models.ForeignKey('SchoolClass', verbose_name='صنف', on_delete=models.SET_NULL, null=True, blank=True, related_name='students')
 	mobile_number = models.CharField('شماره موبایل', max_length=20, blank=True)
 	image = models.ImageField('عکس', upload_to='students/', blank=True, null=True)
 	created_at = models.DateTimeField('ایجاد شده در', auto_now_add=True)

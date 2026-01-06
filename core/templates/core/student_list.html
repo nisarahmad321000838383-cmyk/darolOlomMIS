@@ -452,15 +452,28 @@
           <title>کارت شناسایی</title>
           <script src="https://cdn.tailwindcss.com"><\/script>
           <style>
+            @font-face {
+              font-family: 'B Nazanin';
+              src: url("{% static 'fonts/B_NAZANIN/B-NAZANIN.TTF' %}") format('truetype');
+              font-weight: normal;
+              font-style: normal;
+            }
+            
             * {
               margin: 0;
               padding: 0;
               box-sizing: border-box;
+              font-family: 'B Nazanin', Tahoma, Arial, sans-serif !important;
+              direction: rtl !important;
+              unicode-bidi: embed !important;
+              text-rendering: optimizeLegibility !important;
             }
+            
             @page {
               size: 440px 620px;
               margin: 0;
             }
+            
             @media print {
               body {
                 margin: 0 !important;
@@ -473,7 +486,14 @@
                 padding: 0 !important;
                 page-break-after: avoid;
               }
+              #printCard * {
+                font-family: 'B Nazanin', Tahoma, Arial, sans-serif !important;
+                direction: rtl !important;
+                unicode-bidi: embed !important;
+                text-rendering: optimizeLegibility !important;
+              }
             }
+            
             body { 
               display: flex; 
               justify-content: center; 
@@ -483,9 +503,16 @@
               margin: 0;
               padding: 20px;
             }
+            
             #printCard {
               width: 440px;
               height: 620px;
+            }
+            
+            #printCard * {
+              white-space: normal !important;
+              word-spacing: normal !important;
+              letter-spacing: normal !important;
             }
           <\/style>
         </head>
@@ -497,9 +524,10 @@
       
       printWindow.document.close();
       
+      // Wait longer for font to load before printing
       setTimeout(() => {
         printWindow.print();
-      }, 800);
+      }, 1500);
     }
 
     async function printToPDF() {

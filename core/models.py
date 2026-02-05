@@ -145,6 +145,29 @@ class Teacher(models.Model):
 		return f"{self.name} ({self.id_number or '—'})"
 
 
+class TeacherContract(models.Model):
+	"""Model representing a teacher contract (قرارداد استاد)."""
+	teacher = models.OneToOneField(Teacher, verbose_name='استاد', on_delete=models.CASCADE, related_name='contract')
+	contract_number = models.CharField('شماره قرارداد', max_length=100, blank=True)
+	contract_date = models.DateField('تاریخ قرارداد', blank=True, null=True)
+	start_date = models.DateField('تاریخ شروع', blank=True, null=True)
+	end_date = models.DateField('تاریخ ختم', blank=True, null=True)
+	monthly_salary = models.CharField('معاش ماهوار', max_length=100, blank=True)
+	position = models.CharField('وظیفه/سمت', max_length=150, blank=True)
+	work_hours = models.CharField('ساعات کاری', max_length=150, blank=True)
+	terms = models.TextField('شرایط و توضیحات', blank=True)
+	signed_file = models.FileField('قرارداد امضاشده', upload_to='teacher_contracts/signed/', blank=True, null=True)
+	created_at = models.DateTimeField('ایجاد شده در', auto_now_add=True)
+	updated_at = models.DateTimeField('بروزرسانی شده در', auto_now=True)
+
+	class Meta:
+		verbose_name = 'قرارداد استاد'
+		verbose_name_plural = 'قراردادهای اساتید'
+
+	def __str__(self) -> str:
+		return f"قرارداد {self.teacher.name}"
+
+
 class Semester(models.Model):
 	"""Small model representing a semester number (1..4)."""
 	number = models.PositiveSmallIntegerField('شماره سمستر', unique=True)

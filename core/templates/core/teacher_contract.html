@@ -1,0 +1,248 @@
+{% extends 'core/base.html' %}
+{% load static form_tags %}
+
+{% block content %}
+  <div class="bg-white p-6 rounded-xl shadow-md ring-1 ring-gray-200">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-2xl font-bold">قرارداد استاد</h2>
+        <p class="text-sm text-gray-500">مشخصات قرارداد را وارد کنید و فایل PDF را دریافت نمایید.</p>
+      </div>
+      <div class="hidden sm:flex items-center gap-3">
+        <a href="{% url 'core:teacher_list' %}" class="text-sm text-blue-600 hover:underline">بازگشت به لیست</a>
+        <a href="{% url 'core:teacher_edit' teacher.pk %}" class="text-sm text-blue-600 hover:underline">ویرایش استاد</a>
+      </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      {% csrf_token %}
+
+      <div class="space-y-4">
+        <div class="bg-gray-50/50 border border-gray-200 rounded-xl p-4">
+          <h3 class="text-sm font-semibold text-gray-700 mb-3">مشخصات استاد</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+            <div><span class="text-gray-500">نام:</span> <span class="text-gray-900">{{ teacher.name }}</span></div>
+            <div><span class="text-gray-500">نام پدر:</span> <span class="text-gray-900">{{ teacher.father_name|default:'—' }}</span></div>
+            <div><span class="text-gray-500">تذکره:</span> <span class="text-gray-900">{{ teacher.id_number|default:'—' }}</span></div>
+            <div><span class="text-gray-500">سویه تحصیلی:</span> <span class="text-gray-900">{{ teacher.get_education_level_display }}</span></div>
+            <div><span class="text-gray-500">سطوح تدریس:</span> <span class="text-gray-900">{{ teacher_levels }}</span></div>
+            <div><span class="text-gray-500">سمسترها:</span> <span class="text-gray-900">{{ teacher_semesters }}</span></div>
+            <div><span class="text-gray-500">دوره‌ها:</span> <span class="text-gray-900">{{ teacher_periods }}</span></div>
+            <div><span class="text-gray-500">مضامین:</span> <span class="text-gray-900">{{ teacher_subjects }}</span></div>
+            <div><span class="text-gray-500">صنوف:</span> <span class="text-gray-900">{{ teacher_classes }}</span></div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">شماره قرارداد</label>
+            {{ form.contract_number }}
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">تاریخ قرارداد</label>
+            {{ form.contract_date }}
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">تاریخ شروع</label>
+            {{ form.start_date }}
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">تاریخ ختم</label>
+            {{ form.end_date }}
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">معاش ماهوار</label>
+            {{ form.monthly_salary }}
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">وظیفه/سمت</label>
+            {{ form.position }}
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-medium text-gray-700">ساعات کاری</label>
+            {{ form.work_hours }}
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700">شرایط و توضیحات</label>
+          {{ form.terms }}
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700">فایل قرارداد امضاشده (پس از امضا و اسکن)</label>
+          {{ form.signed_file }}
+          {% if contract.signed_file %}
+            <p class="text-xs text-gray-500 mt-2">
+              فایل فعلی: <a href="{{ contract.signed_file.url }}" class="text-blue-600 hover:underline">دانلود قرارداد امضاشده</a>
+            </p>
+          {% endif %}
+        </div>
+
+        <div class="pt-2 flex flex-wrap items-center gap-3">
+          <button type="submit" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow">ذخیره قرارداد</button>
+          <button type="button" id="download-pdf-btn" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md shadow">دانلود PDF</button>
+        </div>
+      </div>
+
+      <div>
+        <div id="contract-preview" class="contract-paper border border-gray-200 rounded-xl p-8">
+          <div class="text-center">
+            <div class="text-lg font-bold">قرارداد همکاری استاد</div>
+            <div class="mt-2 text-sm text-gray-700">
+              شماره قرارداد: <span id="preview-contract-number">{{ contract.contract_number|default:'—' }}</span>
+              <span class="mx-2">|</span>
+              تاریخ: <span id="preview-contract-date">{% if contract.contract_date %}{{ contract.contract_date|date:"Y/m/d" }}{% else %}—{% endif %}</span>
+            </div>
+          </div>
+
+          <div class="mt-6 text-sm leading-7">
+            <p>
+              این قرارداد فی‌مابین دارالعلوم عالی الحاج سید منصور نادری (طرف اول)
+              و استاد <span class="font-semibold">{{ teacher.name }}</span>
+              فرزند <span class="font-semibold">{{ teacher.father_name|default:'—' }}</span>
+              با نمبر تذکره <span class="font-semibold">{{ teacher.id_number|default:'—' }}</span>
+              (طرف دوم) منعقد می‌گردد.
+            </p>
+            <p class="mt-3">
+              سویه تحصیلی: <span class="font-semibold">{{ teacher.get_education_level_display }}</span> |
+              سطوح تدریس: <span class="font-semibold">{{ teacher_levels }}</span> |
+              مضامین: <span class="font-semibold">{{ teacher_subjects }}</span>
+            </p>
+            <p class="mt-3">
+              مدت قرارداد از
+              <span id="preview-start-date" class="font-semibold">{% if contract.start_date %}{{ contract.start_date|date:"Y/m/d" }}{% else %}—{% endif %}</span>
+              الی
+              <span id="preview-end-date" class="font-semibold">{% if contract.end_date %}{{ contract.end_date|date:"Y/m/d" }}{% else %}—{% endif %}</span>
+              می‌باشد.
+            </p>
+            <p class="mt-3">
+              معاش ماهوار: <span id="preview-salary" class="font-semibold">{{ contract.monthly_salary|default:'—' }}</span> |
+              وظیفه/سمت: <span id="preview-position" class="font-semibold">{{ contract.position|default:'—' }}</span> |
+              ساعات کاری: <span id="preview-work-hours" class="font-semibold">{{ contract.work_hours|default:'—' }}</span>
+            </p>
+            <p class="mt-4 font-semibold">شرایط و توضیحات:</p>
+            <p id="preview-terms" data-default-terms="{{ default_terms }}" class="mt-1 whitespace-pre-line">
+              {{ contract.terms|default:default_terms }}
+            </p>
+          </div>
+
+          <div class="mt-10 grid grid-cols-2 text-center text-sm">
+            <div>
+              <div class="border-t border-gray-300 pt-2">امضای استاد</div>
+            </div>
+            <div>
+              <div class="border-t border-gray-300 pt-2">امضای مقام دارالعلوم</div>
+            </div>
+          </div>
+        </div>
+        <p class="text-xs text-gray-500 mt-3">برای چاپ، از دکمه «دانلود PDF» استفاده کنید. اگر متن خیلی طولانی باشد، PDF کوچک می‌شود.</p>
+      </div>
+    </form>
+  </div>
+
+  <style>
+    .contract-paper {
+      background: #ffffff;
+      color: #0f172a;
+      direction: rtl;
+      max-width: 800px;
+      margin: 0 auto;
+      min-height: 1120px;
+    }
+    html.dark .contract-paper {
+      background: #ffffff;
+      color: #0f172a;
+    }
+  </style>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    (function(){
+      const bindings = [
+        { input: 'id_contract_number', output: 'preview-contract-number', fallback: '—' },
+        { input: 'id_contract_date', output: 'preview-contract-date', fallback: '—', isDate: true },
+        { input: 'id_start_date', output: 'preview-start-date', fallback: '—', isDate: true },
+        { input: 'id_end_date', output: 'preview-end-date', fallback: '—', isDate: true },
+        { input: 'id_monthly_salary', output: 'preview-salary', fallback: '—' },
+        { input: 'id_position', output: 'preview-position', fallback: '—' },
+        { input: 'id_work_hours', output: 'preview-work-hours', fallback: '—' }
+      ];
+
+      function normalizeDate(value) {
+        if (!value) return '';
+        return value.replace(/-/g, '/');
+      }
+
+      function setPreview(outputId, value, fallback, isDate) {
+        const el = document.getElementById(outputId);
+        if (!el) return;
+        let text = value && value.trim() ? value.trim() : '';
+        if (isDate) {
+          text = text ? normalizeDate(text) : '';
+        }
+        el.textContent = text || fallback;
+      }
+
+      function updatePreview() {
+        bindings.forEach(({input, output, fallback, isDate}) => {
+          const inputEl = document.getElementById(input);
+          const value = inputEl ? inputEl.value : '';
+          setPreview(output, value, fallback, isDate);
+        });
+        const termsEl = document.getElementById('id_terms');
+        const termsPreview = document.getElementById('preview-terms');
+        if (termsPreview) {
+          const fallback = termsPreview.getAttribute('data-default-terms') || '—';
+          const text = termsEl && termsEl.value && termsEl.value.trim() ? termsEl.value.trim() : fallback;
+          termsPreview.textContent = text;
+        }
+      }
+
+      bindings.forEach(({input}) => {
+        const inputEl = document.getElementById(input);
+        if (inputEl) {
+          inputEl.addEventListener('input', updatePreview);
+          inputEl.addEventListener('change', updatePreview);
+        }
+      });
+      const termsInput = document.getElementById('id_terms');
+      if (termsInput) {
+        termsInput.addEventListener('input', updatePreview);
+        termsInput.addEventListener('change', updatePreview);
+      }
+      updatePreview();
+
+      const downloadBtn = document.getElementById('download-pdf-btn');
+      if (downloadBtn) {
+        downloadBtn.addEventListener('click', async function(){
+          const preview = document.getElementById('contract-preview');
+          if (!preview) return;
+          try {
+            const canvas = await html2canvas(preview, { scale: 2, useCORS: true });
+            const imgData = canvas.toDataURL('image/png');
+            const { jsPDF } = window.jspdf || window;
+            if (!jsPDF) {
+              alert('کتابخانه PDF بارگذاری نشد.');
+              return;
+            }
+            const pdf = new jsPDF('p', 'pt', 'a4');
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const ratio = Math.min(pageWidth / canvas.width, pageHeight / canvas.height);
+            const imgWidth = canvas.width * ratio;
+            const imgHeight = canvas.height * ratio;
+            const x = (pageWidth - imgWidth) / 2;
+            const y = 20;
+            pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
+            pdf.save('teacher-contract-{{ teacher.pk }}.pdf');
+          } catch (err) {
+            console.error(err);
+            alert('خطا در ساخت PDF. لطفاً دوباره تلاش کنید.');
+          }
+        });
+      }
+    })();
+  </script>
+{% endblock %}

@@ -1,6 +1,6 @@
 from django import forms
 from .models import Student, SchoolClass, Subject, StudyLevel, CoursePeriod
-from .models import Teacher
+from .models import Teacher, TeacherContract
 
 
 class StudentForm(forms.ModelForm):
@@ -212,6 +212,46 @@ class TeacherForm(forms.ModelForm):
             'id_number': 'نمبر تذکره',
         }
 
+
+class TeacherContractForm(forms.ModelForm):
+    class Meta:
+        model = TeacherContract
+        fields = [
+            'contract_number',
+            'contract_date',
+            'start_date',
+            'end_date',
+            'monthly_salary',
+            'position',
+            'work_hours',
+            'terms',
+            'signed_file',
+        ]
+        labels = {
+            'contract_number': 'شماره قرارداد',
+            'contract_date': 'تاریخ قرارداد',
+            'start_date': 'تاریخ شروع',
+            'end_date': 'تاریخ ختم',
+            'monthly_salary': 'معاش ماهوار',
+            'position': 'وظیفه/سمت',
+            'work_hours': 'ساعات کاری',
+            'terms': 'شرایط و توضیحات',
+            'signed_file': 'فایل قرارداد امضاشده',
+        }
+        widgets = {
+            'contract_number': forms.TextInput(attrs={'class': 'border border-gray-300 rounded px-2 py-1 w-full'}),
+            'contract_date': forms.DateInput(attrs={'type': 'date', 'class': 'border border-gray-300 rounded px-2 py-1 w-full'}),
+            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'border border-gray-300 rounded px-2 py-1 w-full'}),
+            'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'border border-gray-300 rounded px-2 py-1 w-full'}),
+            'monthly_salary': forms.TextInput(attrs={'class': 'border border-gray-300 rounded px-2 py-1 w-full', 'placeholder': 'مثلاً ۱۵۰۰۰ افغانی'}),
+            'position': forms.TextInput(attrs={'class': 'border border-gray-300 rounded px-2 py-1 w-full'}),
+            'work_hours': forms.TextInput(attrs={'class': 'border border-gray-300 rounded px-2 py-1 w-full', 'placeholder': 'مثلاً ۸ صبح تا ۲ بعد از ظهر'}),
+            'terms': forms.Textarea(attrs={'rows': 5, 'class': 'border border-gray-300 rounded px-2 py-1 w-full'}),
+            'signed_file': forms.ClearableFileInput(attrs={
+                'class': 'border border-gray-300 rounded px-2 py-1 w-full text-sm',
+                'accept': '.pdf,image/*',
+            }),
+        }
 
 class StudentScoreForm(forms.ModelForm):
     class Meta:

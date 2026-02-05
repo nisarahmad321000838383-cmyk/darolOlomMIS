@@ -6,8 +6,8 @@ from django.contrib import messages
 from django.http import FileResponse, Http404, JsonResponse
 from django.conf import settings
 import os
-from .models import Student, SchoolClass, Subject, Teacher, StudyLevel, CoursePeriod, Semester
-from .forms import StudentForm, SchoolClassForm, SubjectForm, TeacherForm
+from .models import Student, SchoolClass, Subject, Teacher, StudyLevel, CoursePeriod, Semester, TeacherContract
+from .forms import StudentForm, SchoolClassForm, SubjectForm, TeacherForm, TeacherContractForm
 from .models import StudentScore
 import json
 from django.utils.safestring import mark_safe
@@ -259,6 +259,44 @@ def teacher_edit(request, pk):
 		'teacher_levels': teacher_levels,
 		'teacher_periods_ebtedai': teacher_periods_ebtedai,
 		'teacher_periods_moteseta': teacher_periods_moteseta,
+	})
+
+
+def teacher_contract(request, pk):
+	"""Create/update a teacher contract and allow generating a PDF."""
+	teacher = get_object_or_404(Teacher, pk=pk)
+	contract, _ = TeacherContract.objects.get_or_create(teacher=teacher)
+
+	if request.method == 'POST':
+		form = TeacherContractForm(request.POST, request.FILES, instance=contract)
+		if form.is_valid():
+			form.save()
+			messages.success(request, 'قرارداد استاد با موفقیت ذخیره شد.')
+			return redirect(reverse('core:teacher_contract', args=[teacher.pk]))
+	else:
+		form = TeacherContractForm(instance=contract)
+
+	teacher_subjects = ', '.join(teacher.subjects.values_list('name', flat=True)) or '—'
+	teacher_classes = ', '.join(teacher.classes.values_list('name', flat=True)) or '—'
+	teacher_levels = ', '.join(teacher.levels.values_list('name', flat=True)) or '—'
+	teacher_semesters = teacher.get_persian_semesters() or '—'
+	teacher_periods = ' '.join(str(p) for p in teacher.periods.order_by('number')) or '—'
+	default_terms = (
+		'استاد متعهد می‌گردد مطابق نظم داخلی دارالعلوم، '
+		'اوقات رسمی و برنامه درسی را رعایت نموده و در صورت ضرورت '
+		'در جلسات علمی و اداری اشتراک نماید.'
+	)
+
+	return render(request, 'core/teacher_contract.html', {
+		'teacher': teacher,
+		'form': form,
+		'contract': contract,
+		'teacher_subjects': teacher_subjects,
+		'teacher_classes': teacher_classes,
+		'teacher_levels': teacher_levels,
+		'teacher_semesters': teacher_semesters,
+		'teacher_periods': teacher_periods,
+		'default_terms': default_terms,
 	})
 
 

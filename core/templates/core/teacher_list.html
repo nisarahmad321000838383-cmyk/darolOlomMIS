@@ -98,6 +98,13 @@
                 ویرایش
               </a>
 
+              <a href="{% url 'core:teacher_contract' teacher.pk %}" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V6l-4-4H4zm6 1.5L13.5 7H10V3.5zM6 10h6v1H6v-1zm0 3h6v1H6v-1z"/>
+                </svg>
+                قرارداد
+              </a>
+
               <form method="post" action="{% url 'core:teacher_delete' teacher.pk %}" class="inline-block" onsubmit="return confirm('آیا مطمئن هستید که می‌خواهید این استاد را حذف کنید؟');">
                 {% csrf_token %}
                 <button type="submit" class="inline-flex items-center gap-2 bg-danger-600 hover:bg-danger-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow">

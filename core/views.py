@@ -75,7 +75,8 @@ def student_list(request):
 	q = request.GET.get('q', '').strip()
 	students = Student.objects.all().order_by('-created_at')
 	if level_param in level_map:
-		students = students.filter(level=level_map[level_param])
+		level_obj = level_map[level_param]
+		students = students.filter(Q(level=level_obj) | Q(level__isnull=True, school_class__level=level_obj))
 	if q:
 		students = students.filter(
 			Q(name__icontains=q) | Q(father_name__icontains=q) | Q(mobile_number__icontains=q)

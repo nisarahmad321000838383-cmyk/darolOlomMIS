@@ -72,6 +72,7 @@ class StudentForm(forms.ModelForm):
         is_grad = cleaned.get('is_grade12_graduate')
         semesters = cleaned.get('semesters')
         periods = cleaned.get('periods')
+        school_class = cleaned.get('school_class')
 
         if not level:
             self.add_error('level', 'لطفاً سطح آموزشی را انتخاب کنید.')
@@ -90,6 +91,9 @@ class StudentForm(forms.ModelForm):
             if not periods:
                 self.add_error('periods', 'لطفاً حداقل یک دوره را انتخاب کنید.')
             cleaned['semesters'] = []
+
+        if level and school_class and school_class.level and school_class.level_id != level.id:
+            self.add_error('level', 'سطح انتخاب‌شده با سطح صنف انتخاب‌شده مطابقت ندارد.')
 
         return cleaned
 

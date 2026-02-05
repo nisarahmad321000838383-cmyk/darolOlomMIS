@@ -99,14 +99,22 @@ class SchoolClassForm(forms.ModelForm):
         model = SchoolClass
         fields = [
             'name',
+            'level',
         ]
         labels = {
             'name': 'نام صنف',
+            'level': 'سطح آموزشی',
         }
         widgets = {
             'current_address': forms.Textarea(attrs={'rows': 3}),
             'permanent_address': forms.Textarea(attrs={'rows': 3}),
+            'level': forms.Select(attrs={'class': 'border border-gray-300 rounded px-2 py-1 w-full'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'level' in self.fields:
+            self.fields['level'].required = True
 
 
 class SubjectForm(forms.ModelForm):

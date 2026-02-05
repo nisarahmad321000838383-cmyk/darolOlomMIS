@@ -358,13 +358,16 @@ def classes_list(request):
 
 def class_create(request):
 	"""Create a new SchoolClass."""
+	level_map = _ensure_reference_data()
 	if request.method == 'POST':
 		form = SchoolClassForm(request.POST)
 		if form.is_valid():
 			klass = form.save()
 			# handle semester value (posted as repeated/hidden field named 'semester')
 			sem_val = request.POST.get('semester')
-			if sem_val:
+			per_val = request.POST.get('period')
+			level_code = klass.level.code if klass.level else ''
+			if level_code == 'aali' and sem_val:
 				# convert Persian digits to ascii if necessary
 				def persian_to_ascii(s: str) -> str:
 					mapping = {'۰': '0', '۱': '1', '۲': '2', '۳': '3', '۴': '4', '۵': '5', '۶': '6', '۷': '7', '۸': '8', '۹': '9'}
@@ -374,30 +377,50 @@ def class_create(request):
 				except Exception:
 					num = None
 				if num is not None:
-					from .models import Semester
 					sem_obj, _ = Semester.objects.get_or_create(number=num)
 					klass.semester = sem_obj
-					klass.save()
+			else:
+				klass.semester = None
+			if level_code in ('ebtedai', 'moteseta') and per_val:
+				try:
+					per_id = int(_persian_to_ascii(per_val.strip()))
+				except Exception:
+					per_id = None
+				if per_id is not None:
+					klass.period = CoursePeriod.objects.filter(id=per_id).first()
+			else:
+				klass.period = None
+			klass.save()
 			messages.success(request, 'صنف با موفقیت ثبت شد.')
 			return redirect(reverse('core:classes_list'))
 	else:
 		form = SchoolClassForm()
 	# provide existing semesters from DB so frontend can show them
-	from .models import Semester
 	semester_qs = Semester.objects.order_by('number')
 	semester_names = [{'value': str(s.number), 'label': str(s)} for s in semester_qs]
-	return render(request, 'core/class_form.html', {'form': form, 'semester_names': semester_names})
+	period_qs = CoursePeriod.objects.order_by('number')
+	period_names = [{'value': str(p.id), 'label': str(p)} for p in period_qs]
+	level_ids = {k: v.id for k, v in level_map.items()}
+	return render(request, 'core/class_form.html', {
+		'form': form,
+		'semester_names': semester_names,
+		'period_names': period_names,
+		'level_ids': level_ids,
+	})
 
 
 def class_edit(request, pk):
 	"""Edit an existing SchoolClass."""
+	level_map = _ensure_reference_data()
 	klass = get_object_or_404(SchoolClass, pk=pk)
 	if request.method == 'POST':
 		form = SchoolClassForm(request.POST, instance=klass)
 		if form.is_valid():
 			klass = form.save()
 			sem_val = request.POST.get('semester')
-			if sem_val is not None:
+			per_val = request.POST.get('period')
+			level_code = klass.level.code if klass.level else ''
+			if level_code == 'aali' and sem_val is not None:
 				def persian_to_ascii(s: str) -> str:
 					mapping = {'۰': '0', '۱': '1', '۲': '2', '۳': '3', '۴': '4', '۵': '5', '۶': '6', '۷': '7', '۸': '8', '۹': '9'}
 					return ''.join(mapping.get(ch, ch) for ch in s)
@@ -406,21 +429,43 @@ def class_edit(request, pk):
 				except Exception:
 					num = None
 				if num is not None:
-					from .models import Semester
 					sem_obj, _ = Semester.objects.get_or_create(number=num)
 					klass.semester = sem_obj
 				else:
 					klass.semester = None
-				klass.save()
+			else:
+				klass.semester = None
+			if level_code in ('ebtedai', 'moteseta') and per_val is not None:
+				try:
+					per_id = int(_persian_to_ascii(per_val.strip()))
+				except Exception:
+					per_id = None
+				if per_id is not None:
+					klass.period = CoursePeriod.objects.filter(id=per_id).first()
+				else:
+					klass.period = None
+			else:
+				klass.period = None
+			klass.save()
 			messages.success(request, 'اطلاعات صنف با موفقیت بروزرسانی شد.')
 			return redirect(reverse('core:classes_list'))
 	else:
 		form = SchoolClassForm(instance=klass)
-	from .models import Semester
 	semester_qs = Semester.objects.order_by('number')
 	semester_names = [{'value': str(s.number), 'label': str(s)} for s in semester_qs]
+	period_qs = CoursePeriod.objects.order_by('number')
+	period_names = [{'value': str(p.id), 'label': str(p)} for p in period_qs]
 	selected_semester = str(klass.semester.number) if klass.semester else ''
-	return render(request, 'core/class_form.html', {'form': form, 'semester_names': semester_names, 'selected_semester': selected_semester})
+	selected_period = str(klass.period.id) if klass.period else ''
+	level_ids = {k: v.id for k, v in level_map.items()}
+	return render(request, 'core/class_form.html', {
+		'form': form,
+		'semester_names': semester_names,
+		'period_names': period_names,
+		'selected_semester': selected_semester,
+		'selected_period': selected_period,
+		'level_ids': level_ids,
+	})
 
 
 def class_delete(request, pk):

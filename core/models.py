@@ -53,9 +53,12 @@ class Student(models.Model):
 class SchoolClass(models.Model):
 	"""Model representing a school class (صنف)."""
 	name = models.CharField('نام صنف', max_length=255, unique=True)
+	level = models.ForeignKey('StudyLevel', verbose_name='سطح آموزشی', null=True, blank=True, on_delete=models.SET_NULL)
 	# Optional link to a Semester object. Kept nullable to avoid
 	# forcing immediate backfills when adding the field.
 	semester = models.ForeignKey('Semester', verbose_name='سمستر', null=True, blank=True, on_delete=models.SET_NULL)
+	# Optional link to a CoursePeriod for ابتداییه/متوسطه
+	period = models.ForeignKey('CoursePeriod', verbose_name='دوره', null=True, blank=True, on_delete=models.SET_NULL)
 	created_at = models.DateTimeField('ایجاد شده در', auto_now_add=True)
 
 	class Meta:

@@ -2,7 +2,7 @@
 {% load static form_tags %}
 
 {% block content %}
-  <div class="bg-white p-6 rounded-xl shadow-md ring-1 ring-gray-200">
+  <div class="bg-white p-6 rounded-xl shadow-md">
     <div class="flex items-center justify-between mb-6">
       <div>
         <h2 class="text-2xl font-bold">قرارداد استاد</h2>
@@ -155,9 +155,11 @@
       background: #ffffff;
       color: #0f172a;
       direction: rtl;
-      width: 794px;
+      width: 100%;
+      max-width: 794px;
+      height: auto;
+      aspect-ratio: 210 / 297;
       margin: 0 auto;
-      min-height: 1123px;
       position: relative;
     }
     .contract-paper .contract-value {

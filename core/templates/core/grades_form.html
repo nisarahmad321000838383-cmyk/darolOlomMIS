@@ -177,11 +177,54 @@
     font-size: 11px;
     font-weight: 600;
   }
+
+  /* Dark mode adjustments */
+  html.dark #student-display {
+    background-color: #0f172a;
+    border-color: #334155;
+    color: #e2e8f0;
+  }
+  html.dark #student-display::placeholder {
+    color: #64748b;
+  }
+  html.dark .search-icon {
+    color: #94a3b8;
+  }
+  html.dark #student-suggestions {
+    border-color: #334155;
+    background-color: #0f172a;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  }
+  html.dark .student-suggestion-item {
+    border-bottom-color: #1f2937;
+  }
+  html.dark .student-suggestion-item:hover {
+    background: linear-gradient(to left, #0f172a, #111827);
+  }
+  html.dark .student-suggestion-item.selected {
+    background: linear-gradient(to left, #1e293b, #0f172a);
+  }
+  html.dark .student-name {
+    color: #e2e8f0;
+  }
+  html.dark .student-meta {
+    color: #94a3b8;
+  }
+  html.dark .no-results-message {
+    color: #94a3b8;
+  }
+  html.dark .selection-label {
+    color: #e2e8f0;
+  }
+  html.dark .required-badge {
+    background: #7f1d1d;
+    color: #fee2e2;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="bg-white p-6 rounded-xl shadow-md ring-1 ring-gray-200">
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-md ring-1 ring-gray-200 dark:ring-slate-700">
   <div class="flex items-center justify-between mb-6">
     <div>
       <h2 class="text-2xl font-bold">ثبت نمرات</h2>
@@ -196,8 +239,8 @@
     {% csrf_token %}
 
     <!-- Professional Student Selection -->
-    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl border-2 border-blue-100" style="overflow: visible; position: relative;">
-      <label class="selection-label dark:text-gray-800">
+    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-900 p-6 rounded-xl border-2 border-blue-100 dark:border-slate-700" style="overflow: visible; position: relative;">
+      <label class="selection-label dark:text-gray-200">
         <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
         </svg>
@@ -227,10 +270,10 @@
         <p id="subjects-note" class="text-sm text-gray-500 mb-2">لطفاً ابتدا از فیلد "انتخاب دانش‌آموز" یک دانش‌آموز را انتخاب کنید تا مضامین مربوط به سمستر او نمایش داده شوند.</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 hidden" id="subjects-list">
           {% for sub in subjects %}
-          <div class="flex items-center gap-3 p-2 border rounded-md subject-item" data-sub-id="{{ sub.id }}" data-sub-semester="{{ sub.semester }}">
+          <div class="flex items-center gap-3 p-2 border rounded-md subject-item dark:border-slate-700 dark:bg-slate-900/40" data-sub-id="{{ sub.id }}" data-sub-semester="{{ sub.semester }}">
             <input type="checkbox" class="subject-checkbox" id="sub-{{ sub.id }}" data-sub-id="{{ sub.id }}" disabled>
             <label for="sub-{{ sub.id }}" class="flex-1">{{ sub.name }} <span class="text-xs text-gray-400">(سمستر {{ sub.semester }})</span></label>
-            <input type="number" min="0" max="100" class="score-input w-24 border rounded px-2 py-1" placeholder="نمره" data-sub-id="{{ sub.id }}" disabled>
+            <input type="number" min="0" max="100" class="score-input w-24 border rounded px-2 py-1 dark:border-slate-700" placeholder="نمره" data-sub-id="{{ sub.id }}" disabled>
           </div>
           {% empty %}
           <p class="text-sm text-gray-500">مضمون تعریف نشده است.</p>
@@ -248,7 +291,7 @@
       <a href="{% url 'core:dashboard' %}" class="inline-flex items-center gap-2 border border-gray-300 px-4 py-2 rounded-md text-gray-700">انصراف</a>
     </div>
     {% if saved_subjects %}
-    <div id="saved-summary" class="mt-4 p-3 border-l-4 border-green-500 bg-green-50 rounded">
+    <div id="saved-summary" class="mt-4 p-3 border-l-4 border-green-500 bg-green-50 dark:bg-emerald-900/20 rounded">
       {% for st in students %}
         {% if st.id == saved_student_id %}
           <div class="text-sm text-gray-700">
